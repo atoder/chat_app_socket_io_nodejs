@@ -9,6 +9,25 @@ app.use(express.static(__dirname + '/public'));
 
 var clientInfo = {};
 
+function sendPrivateMessage(socket, from, text) {
+  var fullText = text.substr(9);
+  var to = fullText.substr(0, fullText.indexOf(' ')).trim();
+  var message = fullText.substr(fullText.indexOf(' ') + 1).trim();
+  if (typeof clientInfo === 'undefined') {
+    return;
+  }
+  var toSocketId = null;
+  Object.keys(clientInfo).forEach(function (socketId) {
+    var userInfo = clientInfo[socketId];
+    if (userInfo.name === to) {
+      io.to(socketId).emit('message', {
+        name: from,
+        text: text,
+        timestamp: moment().valueOf()
+      });
+    }
+  });
+}
 // send current users to provided socket
 function sendCurrentUsers (socket) {
   var info = clientInfo[socket.id];
@@ -19,11 +38,10 @@ function sendCurrentUsers (socket) {
 
   Object.keys(clientInfo).forEach(function (socketId) {
     var userInfo = clientInfo[socketId];
-  
+
     if (info.room === userInfo.room) {
       users.push(userInfo.name);
     }
-          
   });
 
   socket.emit('message', {
@@ -49,6 +67,8 @@ io.on('connection', function (socket) {
   });
 
   socket.on('joinRoom', function (req) {
+    console.log('join room req: ' + JSON.stringify(req));
+    console.log('req room: ' + req.room);
     clientInfo[socket.id] = req;
     socket.join(req.room);
     socket.broadcast.to(req.room).emit('message', {
@@ -60,9 +80,13 @@ io.on('connection', function (socket) {
 
   socket.on('message', function (message) {
     console.log('Message received: ' + message.text);
+    console.log(message);
     //socket.broadcast.emit('message', message);
     if (message.text === '@currentUsers') {
       sendCurrentUsers(socket);
+    } else if (message.text.substr(0,8) === '@private') {
+      // if a message starts with private
+      sendPrivateMessage(socket, message.name, message.text);
     } else {
       message.timestamp = moment().valueOf();
       io.to(clientInfo[socket.id].room).emit('message', message);
