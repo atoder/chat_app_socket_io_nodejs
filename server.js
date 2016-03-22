@@ -16,13 +16,21 @@ function sendPrivateMessage(socket, from, text) {
   if (typeof clientInfo === 'undefined') {
     return;
   }
+  // show the private message to yourself as well
+  io.to(socket.id).emit('message', {
+    name: from,
+    text: '@' + to + ': ' + message,
+    timestamp: moment().valueOf()
+  });
+
   var toSocketId = null;
   Object.keys(clientInfo).forEach(function (socketId) {
     var userInfo = clientInfo[socketId];
     if (userInfo.name === to) {
+      // send the private message to intended user
       io.to(socketId).emit('message', {
         name: from,
-        text: text,
+        text: '@' + from + ': ' + message,
         timestamp: moment().valueOf()
       });
     }
