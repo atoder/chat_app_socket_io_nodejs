@@ -84,6 +84,7 @@ io.on('connection', function (socket) {
       text: req.name + ' has joined!',
       timestamp: moment().valueOf()
     });
+    sendCurrentUsers(socket);
   });
 
   socket.on('message', function (message) {
