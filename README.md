@@ -4,5 +4,3 @@
 * Commands to be able to list all the users and send private messages to individuals
 * Styled with bootstrap
 
-
-https://chatappsocketio.herokuapp.com/
